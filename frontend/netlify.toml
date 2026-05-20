@@ -1,0 +1,7 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NEXT_PUBLIC_API_URL = "https://crypto-web3-toolkit-v2-production.up.railway.app"
+  NEXT_PUBLIC_MOCK_MODE = "false"

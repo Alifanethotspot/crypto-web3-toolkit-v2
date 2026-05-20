@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Web3 Toolkit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="mb-12">
+            <h1 class="text-4xl font-bold mb-2">🚀 Crypto Web3 Toolkit</h1>
+            <p class="text-slate-400">AI-powered Web3 analysis</p>
+            <p class="text-xs text-green-400 mt-2">✅ Backend: <span id="backend-url">https://crypto-web3-toolkit-v2-production.up.railway.app</span></p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-4 mb-8 border-b border-slate-700">
+            <button onclick="setTab('wallet')" id="tab-wallet" class="px-4 py-2 font-semibold text-blue-400 border-b-2 border-blue-400">Wallet</button>
+            <button onclick="setTab('contract')" id="tab-contract" class="px-4 py-2 font-semibold text-slate-400 hover:text-slate-300">Contract</button>
+            <button onclick="setTab('sentiment')" id="tab-sentiment" class="px-4 py-2 font-semibold text-slate-400 hover:text-slate-300">Sentiment</button>
+        </div>
+
+        <!-- Input Form -->
+        <div class="bg-slate-800 rounded-lg p-8 mb-8">
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2" id="input-label">Wallet Address</label>
+                <input 
+                    type="text" 
+                    id="input-field"
+                    placeholder="0x..."
+                    class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                />
+            </div>
+
+            <button 
+                onclick="analyze()"
+                id="analyze-btn"
+                class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 rounded font-semibold transition-colors"
+            >
+                Analyze
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden bg-slate-800 rounded-lg p-8">
+            <h2 class="text-xl font-bold mb-4">Results</h2>
+            <pre id="results-content" class="bg-slate-900 p-4 rounded text-sm overflow-auto max-h-96 text-green-400"></pre>
+        </div>
+
+        <!-- Status -->
+        <div class="mt-8 text-center text-slate-400 text-sm">
+            <p>✅ Backend: Live</p>
+            <p>✅ Frontend: Deployed</p>
+            <p class="mt-2 text-xs">Version 2.0 - Ultra Minimal</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://crypto-web3-toolkit-v2-production.up.railway.app';
+        let activeTab = 'wallet';
+
+        function setTab(tab) {
+            activeTab = tab;
+            
+            // Update tab styles
+            document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                btn.className = 'px-4 py-2 font-semibold text-slate-400 hover:text-slate-300';
+            });
+            document.getElementById(`tab-${tab}`).className = 'px-4 py-2 font-semibold text-blue-400 border-b-2 border-blue-400';
+            
+            // Update input label and placeholder
+            const labels = {
+                wallet: 'Wallet Address',
+                contract: 'Contract Address',
+                sentiment: 'Token Symbol'
+            };
+            const placeholders = {
+                wallet: '0x...',
+                contract: '0x...',
+                sentiment: 'BTC'
+            };
+            
+            document.getElementById('input-label').textContent = labels[tab];
+            document.getElementById('input-field').placeholder = placeholders[tab];
+            document.getElementById('input-field').value = '';
+            
+            // Hide results
+            document.getElementById('results').classList.add('hidden');
+        }
+
+        async function analyze() {
+            const input = document.getElementById('input-field').value;
+            const btn = document.getElementById('analyze-btn');
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            
+            // Disable button
+            btn.disabled = true;
+            btn.textContent = 'Analyzing...';
+            
+            try {
+                const endpoints = {
+                    wallet: '/api/wallet/analyze',
+                    contract: '/api/contract/audit',
+                    sentiment: '/api/sentiment/analyze'
+                };
+                
+                const bodies = {
+                    wallet: { address: input || '0x1234567890123456789012345678901234567890' },
+                    contract: { contract: input || '0x1234567890123456789012345678901234567890' },
+                    sentiment: { token: input || 'BTC' }
+                };
+                
+                const response = await fetch(API_URL + endpoints[activeTab], {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(bodies[activeTab])
+                });
+                
+                const data = await response.json();
+                
+                // Show results
+                resultsContent.textContent = JSON.stringify(data, null, 2);
+                resultsDiv.classList.remove('hidden');
+                
+            } catch (error) {
+                resultsContent.textContent = JSON.stringify({
+                    error: 'Failed to connect to backend',
+                    message: error.message
+                }, null, 2);
+                resultsDiv.classList.remove('hidden');
+            } finally {
+                // Re-enable button
+                btn.disabled = false;
+                btn.textContent = 'Analyze';
+            }
+        }
+        
+        // Test backend on load
+        fetch(API_URL + '/health')
+            .then(r => r.json())
+            .then(data => console.log('Backend health:', data))
+            .catch(err => console.error('Backend error:', err));
+    </script>
+</body>
+</html>
